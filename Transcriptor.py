@@ -1,10 +1,8 @@
 import os
 
-# 1. Cria a pasta no disco D imediatamente se ela não existir
+# Força o cache para o Disco D e desativa avisos
 CACHE_DIR = "D:/ia_cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
-
-# 2. Força todas as bibliotecas de IA a usarem o Disco D como única rota de cache
 os.environ["HF_HOME"] = CACHE_DIR
 os.environ["TORCH_HOME"] = CACHE_DIR
 os.environ["XDG_CACHE_HOME"] = CACHE_DIR
@@ -19,7 +17,6 @@ def separar_voz(caminho_audio):
       "A separar a voz do instrumental com o Demucs (a usar o Disco D para os"
       " modelos)..."
   )
-  # O Demucs vai descarregar os pesos do PyTorch diretamente para D:/ia_cache
   subprocess.run(["demucs", "-n", "htdemucs_ft", caminho_audio], check=True)
 
   nome_base = os.path.splitext(os.path.basename(caminho_audio))[0]
@@ -29,14 +26,22 @@ def separar_voz(caminho_audio):
   return caminho_voz
 
 
-def transcrever_audio(caminho_voz, idioma=None):
-  print("A carregar o modelo do Whisper (a guardar no Disco D)...")
+def segundos_para_lrc(segundos):
+  """Converte segundos para o formato de tempo do LRC: [mm:ss.xx]"""
+  minutos = int(segundos // 60)
+  secs = int(segundos % 60)
+  centesimos = int((segundos - int(segundos)) * 100)
+  return f"[{minutos:02d}:{secs:02d}.{centesimos:02d}]"
+
+
+def transcrever_para_lrc(caminho_voz, arquivo_saida_lrc, idioma=None):
+  print("A carregar o modelo do Whisper (a funcionar no CPU)...")
   model_size = "large-v3"
 
-  # O Whisper vai descarregar os pesos do Hugging Face diretamente para D:/ia_cache
+  # Força o uso do CPU e otimização int8 para evitar erros de driver gráfico
   model = WhisperModel(model_size, device="cpu", compute_type="int8")
 
-  print("A transcrever a letra...")
+  print("A transcrever e a sincronizar a letra...")
   segments, info = model.transcribe(
       caminho_voz, beam_size=5, language=idioma, task="transcribe"
   )
@@ -46,13 +51,18 @@ def transcrever_audio(caminho_voz, idioma=None):
       f" {info.language_probability:.2f})"
   )
 
-  letra_final = []
+  linhas_lrc = []
   for segment in segments:
-    linha = f"[{segment.start:.2f}s -> {segment.end:.2f}s] {segment.text}"
-    print(linha)
-    letra_final.append(segment.text)
+    tempo_formatado = segundos_para_lrc(segment.start)
+    linha_lrc = f"{tempo_formatado}{segment.text.strip()}"
+    print(linha_lrc)
+    linhas_lrc.append(linha_lrc)
 
-  return "\n".join(letra_final)
+  # Guarda no formato .lrc
+  with open(arquivo_saida_lrc, "w", encoding="utf-8") as f:
+    f.write("\n".join(linhas_lrc))
+
+  print(f"\nSucesso! Ficheiro de legendas guardado em '{arquivo_saida_lrc}'.")
 
 
 if __name__ == "__main__":
@@ -64,10 +74,11 @@ if __name__ == "__main__":
         " projeto."
     )
   else:
+    # Passo 1: Isolar a voz
     vocals_wav = separar_voz(arquivo_musica)
-    letra = transcrever_audio(vocals_wav, idioma=None)
 
-    with open("letra_gerada.txt", "w", encoding="utf-8") as f:
-      f.write(letra)
+    # Passo 2: Transcrever e gerar o .lrc com o mesmo nome base do áudio
+    nome_base = os.path.splitext(os.path.basename(arquivo_musica))[0]
+    arquivo_lrc = f"{nome_base}.lrc"
 
-    print("\nProcesso concluído! Letra guardada em 'letra_gerada.txt'.")
+    transcrever_para_lrc(vocals_wav, arquivo_lrc, idioma=None)
