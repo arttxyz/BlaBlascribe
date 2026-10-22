@@ -14,7 +14,7 @@ from faster_whisper import WhisperModel
 
 def separar_voz(caminho_audio):
   print(
-      "A separar a voz do instrumental com o Demucs (a usar o Disco D para os"
+      "A separar a voz do instrumental (a usar o Disco D para os"
       " modelos)..."
   )
   subprocess.run(["demucs", "-n", "htdemucs_ft", caminho_audio], check=True)
@@ -62,7 +62,7 @@ def transcrever_para_lrc(caminho_voz, arquivo_saida_lrc, idioma=None):
   with open(arquivo_saida_lrc, "w", encoding="utf-8") as f:
     f.write("\n".join(linhas_lrc))
 
-  print(f"\nSucesso! Ficheiro de legendas guardado em '{arquivo_saida_lrc}'.")
+  print(f"\nSucesso Ficheiro de legendas guardado em '{arquivo_saida_lrc}'.")
 
 
 if __name__ == "__main__":
