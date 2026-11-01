@@ -21,16 +21,17 @@ genius = lyricsgenius.Genius(GENIUS_TOKEN, remove_section_headers=True)
 
 app = FastAPI(
     title="AI Music Transcriber API (Bulletproof)",
-    version="4.1"
+    version="4.2"
 )
 
-print("API Blindada v4.1 iniciada com sucesso!")
+print("API Blindada v4.2 iniciada com sucesso!")
 
 class PedidoTranscricao(BaseModel):
     entrada: str
 
 def buscar_letra_genius(query: str) -> str:
     try:
+        print(f"A procurar letra exata no Genius para: {query}")
         song = genius.search_song(query)
         if song and song.lyrics:
             letra_limpa = re.sub(r'^\d+ Contributors.*Lyrics', '', song.lyrics)
@@ -42,15 +43,22 @@ def buscar_letra_genius(query: str) -> str:
     return ""
 
 def buscar_lrc_lrclib(track_name: str) -> dict:
+    """Passo 1: Tenta buscar o LRC oficial sincronizado na LRCLIB com limpeza inteligente"""
     try:
-        query_limpa = track_name.replace("Official Music Video", "").replace("MV", "").strip()
+        # Remove parênteses, chavetas e termos comuns do YouTube para garantir o match exato
+        query_limpa = re.sub(r'\(.*?\)|\[.*?\]', '', track_name)
+        query_limpa = query_limpa.replace("Official Music Video", "").replace("MV", "").replace("Audio", "").strip()
+        
+        print(f"A procurar na LRCLIB com a query limpa: '{query_limpa}'")
         url = f"https://lrclib.net/api/search?q={query_limpa}"
         response = requests.get(url, timeout=5)
+        
         if response.status_code == 200:
             results = response.json()
             if results:
                 for res in results:
                     if res.get("syncedLyrics"):
+                        print(f"LRC oficial encontrado na LRCLIB para: {res.get('trackName')} - {res.get('artistName')}")
                         return {"tipo": "synced", "lrc": res["syncedLyrics"]}
     except Exception as e:
         print(f"Erro na LRCLIB: {e}")
@@ -89,14 +97,14 @@ def pipeline_hibrido(entrada: str) -> dict:
     nome_base = "".join(c for c in nome_base if c.isalnum() or c in (' ', '-', '_')).strip()
     lrc_out = f"{nome_base}.lrc"
     
-    # --- CAMADA 1: LRCLIB ---
+    # --- CAMADA 1: LRCLIB (Com limpeza de títulos do YouTube) ---
     dados_lrclib = buscar_lrc_lrclib(titulo_musica)
     if dados_lrclib["tipo"] == "synced":
         with open(lrc_out, "w", encoding="utf-8") as f:
             f.write(dados_lrclib["lrc"])
         return {
             "status": "sucesso",
-            "fonte": "LRCLIB (Oficial Sincronizado)",
+            "fonte": "LRCLIB (Oficial Sincronizado - Camada 1)",
             "arquivo_lrc": lrc_out,
             "nome_base": nome_base
         }
@@ -169,7 +177,6 @@ print("Processo isolado concluído com sucesso!")
         f.write(script_isolado_codigo)
 
     try:
-        # Usa explicitamente o python de dentro da venv
         python_venv = os.path.join("venv", "Scripts", "python.exe") if os.name == "nt" else "venv/bin/python"
         resultado_sub = subprocess.run([python_venv, script_path], capture_output=True, text=True, check=True)
         print(resultado_sub.stdout)
@@ -189,7 +196,7 @@ print("Processo isolado concluído com sucesso!")
 
 @app.get("/")
 def home():
-    return {"mensagem": "API Blindada v4.1 a funcionar!"}
+    return {"mensagem": "API Blindada v4.2 a funcionar!"}
 
 @app.post("/api/transcrever")
 def processar_transcricao(pedido: PedidoTranscricao):
