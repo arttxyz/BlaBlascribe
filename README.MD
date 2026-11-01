@@ -1,69 +1,27 @@
-🎵 AI Music Transcriber API
+# 🎵 BlaBlascribe API
 
-Servidor backend em FastAPI para transcrição automática de músicas, isolamento de vocais e geração de ficheiros sincronizados .lrc, acompanhado por um sistema de métricas de qualidade.
+Uma API robusta baseada em FastAPI construída para gerar ficheiros de letras sincronizadas (`.lrc`) para música, com foco especial em géneros como Trap, Hip-Hop e Underground. O sistema utiliza uma arquitetura híbrida inteligente para garantir que obténs sempre letras de alta qualidade e com o timing perfeito de forma rápida e estável.
 
-🚀 Tecnologias Utilizadas
+## 🚀 Tecnologias (Stack)
 
-FastAPI & Uvicorn: Framework web e servidor ASGI para a API REST.
+* **Backend:** [FastAPI](https://fastapi.tiangolo.com/) (Python)
+* **Processamento de Áudio / IA:** PyTorch, WhisperX, Demucs, yt-dlp
+* **Fontes de Letras:** LRCLIB & Genius API
+* **Ambiente:** Windows-optimized com execução isolada de processos para estabilidade máxima.
 
-faster-whisper (large-v3, CPU, int8): Transcrição de alta precisão em múltiplos idiomas.
+## 🛠️ Endpoints Principais
 
-Demucs (htdemucs_ft): Isolamento e separação de faixas vocais.
+* `POST /api/transcrever`
+  * **Descrição:** Recebe um link do YouTube ou o nome da música, processa o áudio e gera o ficheiro `.lrc`.
+  * **Body (JSON):** `{"entrada": "nome da musica ou link"}`
+* `GET /api/download/lrc/{nome_arquivo}`
+  * **Descrição:** Permite o download direto do ficheiro `.lrc` gerado.
 
-yt-dlp: Orquestração e descarregamento de áudio a partir de links ou termos de pesquisa.
+## ⚙️ Como Executar Localmente
 
-📥 Formatos de Entrada Suportados
-
-A API aceita total flexibilidade no campo entrada:
-
-Links Diretos: URLs de plataformas suportadas (YouTube, SoundCloud, etc.).
-
-Termos de Pesquisa: Nome da música e artista (ex: "GO - Cortis").
-
-Ficheiro Local: Caminho para um ficheiro de áudio bruto (.mp3 ou .wav).
-
-📌 Endpoints da API
-
-1. Estado da API
-
-GET /
-
-Retorna uma mensagem de confirmação de que o servidor está ativo.
-
-2. Processamento e Transcrição
-
-POST /api/transcrever
-
-Payload (JSON):
-
-{
-  "entrada": "https://www.youtube.com/watch?v=..."
-}
-
-
-Resposta: Retorna o relatório detalhado de métricas, idioma detetado, status de qualidade e o nome base do ficheiro gerado.
-
-3. Descarregamento de Ficheiros
-
-GET /api/download/lrc/{nome_arquivo}
-
-Descarrega diretamente o ficheiro de letra sincronizada (.lrc).
-
-GET /api/download/metrics/{nome_arquivo}
-
-Descarrega o relatório completo em formato JSON (_metricas.json).
-
-⚙️ Como Executar Localmente
-
-Ativa o ambiente virtual:
-
-venv\Scripts\activate
-
-
-Inicia o servidor com o Uvicorn:
-
-uvicorn main:app --reload
-
-
-Acede à documentação interativa (Swagger UI) em:
-http://127.0.0.1:8000/docs
+1. Clona o repositório e entra na pasta do projeto.
+2. Cria e ativa um ambiente virtual (`venv`):
+   ```bash
+   python -m venv venv
+   # No Windows:
+   venv\Scripts\activate
