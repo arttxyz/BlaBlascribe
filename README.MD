@@ -22,6 +22,6 @@ Uma API robusta baseada em FastAPI construída para gerar ficheiros de letras si
 1. Clona o repositório e entra na pasta do projeto.
 2. Cria e ativa um ambiente virtual (`venv`):
    ```bash
-   python -m venv venv
+   python -m venv venvs
    # No Windows:
    venv\Scripts\activate
