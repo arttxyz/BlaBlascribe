@@ -1,0 +1,19 @@
+# Python / IA
+venvs/
+__pycache__/
+downloads/
+separated/
+ia_cache/
+*.lrc
+*.pyc
+run_whisper_isolated.py
+run_whisper_isolated_tmp.py
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+
+# Outros
+cookies.txt
+.env
